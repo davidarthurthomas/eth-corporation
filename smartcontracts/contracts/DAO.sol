@@ -30,14 +30,14 @@ contract DAO is Context {
 
     struct Round {
         uint256 round_id;
-        bool is_active;
+        bool    is_active;
         string  name;
         string  description;
         uint256 valuation;
         uint256 round_size;
         uint256 left_to_raise;
-        uint256 start_date;
-        uint256 expiration_date;
+        uint32  start_date;
+        uint32  end_date;
         uint256 votes_for;
         uint256 votes_against;
         mapping(address => int256) vote_status;
@@ -60,8 +60,8 @@ contract DAO is Context {
         string description,
         uint256 valuation,
         uint256 amount,
-        uint256 start_time,
-        uint256 end_time
+        uint256 start_date,
+        uint256 end_date
     );
 
     /**
@@ -239,10 +239,10 @@ contract DAO is Context {
     * @param description the description of the round
     * @param valuation the valuation of the round
     * @param amount the amount of tokens to be raised
-    * @param start_time the start time of the round
-    * @param end_time the end time of the round
+    * @param start_date the start time of the round
+    * @param end_date the end time of the round
     */
-    function createRound(string memory name, string memory description, uint256 valuation, uint256 amount, uint256 start_time, uint256 end_time) public onlyFounder() noActiveRounds() {
+    function createRound(string memory name, string memory description, uint256 valuation, uint256 amount, uint32 start_date, uint32 end_date) public onlyFounder() noActiveRounds() {
         // Increment the next_round counter
         _current_round++;
 
@@ -255,8 +255,8 @@ contract DAO is Context {
         round.valuation = valuation;
         round.round_size = amount;
         round.left_to_raise = amount;
-        round.start_date = start_time;
-        round.expiration_date = end_time;
+        round.start_date = start_date;
+        round.end_date = end_date;
         round.votes_for = 0;
         round.votes_against = 0;
         round.is_approved = false;
@@ -264,7 +264,7 @@ contract DAO is Context {
         round.is_complete = false;
 
         // Emit the RoundCreated event
-        emit RoundCreated(_current_round, name, description, valuation, amount, start_time, end_time);
+        emit RoundCreated(_current_round, round.name, round.description, round.valuation, amount, round.start_date, round.end_date);
     }
 
     /**
@@ -386,7 +386,7 @@ contract DAO is Context {
             round.is_complete = true;
             _complete_mint();
             _treasury_balance += round.round_size;
-        } else if (round.left_to_raise > 0 && round.expiration_date > block.timestamp) {
+        } else if (round.left_to_raise > 0 && round.end_date > block.timestamp) {
             round.is_active = false;
             _return_funds();
         }
