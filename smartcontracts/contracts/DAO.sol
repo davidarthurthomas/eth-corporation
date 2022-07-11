@@ -2,10 +2,9 @@
 
 pragma solidity ^0.8.15;
 
-import "./IDAO.sol";
 import "./ERC20.sol";
 
-contract DAO is Context, IDAO {
+contract DAO is Context {
     mapping(address => bool) private _founders;
     string private _name;
     string private _description;
