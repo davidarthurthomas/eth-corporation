@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "./Token.sol";
 
 contract DAO is Context {
-    mapping(address => bool) private _founders;
+    address payable[] _founders;
     string private _name;
     string private _description;
     Token private _token;
@@ -19,7 +19,8 @@ contract DAO is Context {
     * @param symbol the symbol of the DAO's token
     */
     constructor(string memory name, string memory symbol, string memory description) {
-        _founders[_msgSender()] = true;
+        _founders = new address payable[](1);
+        _founders[0] = payable(_msgSender());
         _name = name;
         _description = description;
         _token = new Token(name, symbol);
@@ -64,6 +65,22 @@ contract DAO is Context {
     struct RoundInvestments {
         address payable[] investors;
         mapping(address => uint256) investments;
+    }
+
+    /**
+    * @dev A set of structs we use when returning Round information.
+    */
+    struct ReturnRound {
+        uint256 round_id;
+        RoundStatus status;
+        RoundTimeline timeline;
+        string  name;
+        string  description;
+        uint256 valuation;
+        uint256 round_size;
+        uint256 left_to_raise;
+        uint256 votes_for;
+        uint256 votes_against;
     }
 
     // EVENTS ---------------------------------------------------------------------------------------------------------
@@ -128,16 +145,26 @@ contract DAO is Context {
     * @dev Checks if the message sender is a founder of the DAO.
     */
     modifier onlyFounder() {
-        require(_founders[_msgSender()], "Only founders can call this function.");
-        _;
+        // Iterate over the {founders} array and check if the sender is a founder.
+        for (uint256 i = 0; i < _founders.length; i++) {
+            if (_founders[i] == _msgSender()) {
+                _;
+            }
+        }
+        require(false, "Only founders can perform this action.");
     }
 
     /**
     * @dev Checks that an address is listed as founder of the DAO.
     */
     modifier isFounder(address founder) {
-        require(_founders[founder], "Founder doesn't exist.");
-        _;
+        // Iterate over the {founders} array and check if the sender is a founder.
+        for (uint256 i = 0; i < _founders.length; i++) {
+            if (_founders[i] == founder) {
+                _;
+            }
+        }
+        require(false, "Address is not a founder.");
     }
 
     /**
@@ -145,7 +172,12 @@ contract DAO is Context {
     * @param founder the address to check
     */
     modifier isNotFounder(address founder) {
-        require(!_founders[founder], "Founder already exists.");
+        // Iterate over the {founders} array and check if the sender is a founder.
+        for (uint256 i = 0; i < _founders.length; i++) {
+            if (_founders[i] == founder) {
+                require(false, "Address is not a founder.");
+            }
+        }
         _;
     }
 
@@ -214,24 +246,28 @@ contract DAO is Context {
     }
 
     /**
-    * @dev Returns the name of the current round.
+    * @dev Returns a list of all the founders of the DAO.
     */
-    function currentRoundName() public view returns (string memory) {
-        return rounds_by_id[_current_round].name;
+    function founders() public view returns (address payable[] memory) {
+        return _founders;
     }
 
     /**
-    * @dev Returns the description of the current round.
+    * @dev Returns information about the current round.
     */
-    function currentRoundDescription() public view returns (string memory) {
-        return rounds_by_id[_current_round].description;
-    }
-
-    /**
-    * @dev Returns the valuation of the current round.
-    */
-    function currentRoundValuation() public view returns (uint256) {
-        return rounds_by_id[_current_round].valuation;
+    function currentRound() public view returns (ReturnRound memory) {
+        return ReturnRound(
+            rounds_by_id[_current_round].round_id,
+            rounds_by_id[_current_round].status,
+            rounds_by_id[_current_round].timeline,
+            rounds_by_id[_current_round].name,
+            rounds_by_id[_current_round].description,
+            rounds_by_id[_current_round].valuation,
+            rounds_by_id[_current_round].round_size,
+            rounds_by_id[_current_round].left_to_raise,
+            rounds_by_id[_current_round].votes.votes_for,
+            rounds_by_id[_current_round].votes.votes_against
+        );
     }
 
     /**
@@ -239,7 +275,8 @@ contract DAO is Context {
     * @param founder the address of the founder to add
     */
     function addFounder(address founder) public onlyFounder() isNotFounder(founder) {
-        _founders[founder] = true;
+        // Add the founder to the {founders} array.
+        _founders.push(payable(founder));
     }
 
     /**
@@ -247,7 +284,13 @@ contract DAO is Context {
     * @param founder the address of the founder to remove
     */
     function removeFounder(address founder) public onlyFounder() isFounder(founder) {
-        delete _founders[founder];
+        // Remove the founder from the {founders} array.
+        for (uint256 i = 0; i < _founders.length; i++) {
+            if (_founders[i] == founder) {
+                _founders[i] = _founders[_founders.length - 1];
+            }
+        }
+        _founders.pop();
     }
 
     /**
