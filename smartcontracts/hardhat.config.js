@@ -8,7 +8,7 @@ task("deploy", "Deploys a DAO with name symbol and description")
   .addParam("name", "The DAO's name")
   .addParam("symbol", "The DAO's symbol")
   .addParam("description", "The DAO's description")
-  .setAction(async () => {
+  .setAction(async (args) => {
     console.log("[4] Getting Deployer's address")
     const deployer = await ethers.getSigner();
     console.log("[+] Deploying contract with address: ", deployer.address)
@@ -18,9 +18,9 @@ task("deploy", "Deploys a DAO with name symbol and description")
 
     console.log("[2] Deploying contract")
     const dao = await DAO.deploy(
-      taskArgs.name,
-      taskArgs.symbol,
-      taskArgs.description
+      args.name,
+      args.symbol,
+      args.description
     );
 
     console.log("[1] Awaiting deployment transaction to be mined")
