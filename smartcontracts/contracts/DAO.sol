@@ -372,7 +372,7 @@ contract DAO is Context {
 
     /**
     * @dev Allows someone to invest in a round.
-    * @param amount the amount of ETH to invest
+    * @param amount the amount of MATIC to invest
     *
     * NOTE: {amount} is implicitly transferred to the DAO contract.
     */
@@ -406,7 +406,7 @@ contract DAO is Context {
 
     /**
     * @dev Allows a founder to withdraw {amount} from the DAO's treasury.
-    * @param amount the amount of ETH to withdraw
+    * @param amount the amount of MATIC to withdraw
     */
     function withdraw(uint256 amount) public onlyFounder() hasEnoughFundsToWithdraw(amount){
         // Transfer the amount to the sender
