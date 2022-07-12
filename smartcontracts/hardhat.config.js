@@ -18,9 +18,9 @@ task("deploy", "Deploys a DAO with name symbol and description")
 
     console.log("[2] Deploying contract")
     const dao = await DAO.deploy(
-      "Decentralized Autonomous Organization",
-      "DAO",
-      "An example of a decentralized autonomous organization."
+      taskArgs.name,
+      taskArgs.symbol,
+      taskArgs.description
     );
 
     console.log("[1] Awaiting deployment transaction to be mined")
