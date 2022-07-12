@@ -30,24 +30,40 @@ contract DAO is Context {
 
     struct Round {
         uint256 round_id;
-        bool    is_active;
+        RoundStatus status;
+        RoundTimeline timeline;
         string  name;
         string  description;
         uint256 valuation;
         uint256 round_size;
         uint256 left_to_raise;
+        RoundVotes votes;
+        RoundInvestments investments;
+    }
+
+    mapping(uint256 => Round) rounds_by_id;
+
+    struct RoundTimeline {
         uint32  start_date;
         uint32  end_date;
-        uint256 votes_for;
-        uint256 votes_against;
-        mapping(address => int256) vote_status;
+    }
+
+    struct RoundStatus {
+        bool is_active;
         bool is_approved;
-        address payable[] investors;
-        mapping(address => uint256) investments;
         bool is_complete;
     }
 
-    mapping(uint256 => Round) public rounds_by_id;
+    struct RoundVotes {
+        uint256 votes_for;
+        uint256 votes_against;
+        mapping(address => int256) vote_status;
+    }
+
+    struct RoundInvestments {
+        address payable[] investors;
+        mapping(address => uint256) investments;
+    }
 
     // EVENTS ---------------------------------------------------------------------------------------------------------
 
@@ -92,7 +108,7 @@ contract DAO is Context {
     */
     event RoundClosed(
         uint256 round_id,
-        bool is_completed
+        bool is_complete
     );
 
     /**
@@ -133,7 +149,7 @@ contract DAO is Context {
     }
 
     modifier noActiveRounds() {
-        require(!rounds_by_id[_current_round].is_active, "There is already an active investment round.");
+        require(!rounds_by_id[_current_round].status.is_active, "There is already an active investment round.");
         _;
     }
 
@@ -141,8 +157,8 @@ contract DAO is Context {
     * @dev Checks that a round can be voted on.
     */
     modifier isVotable() {
-        require(rounds_by_id[_current_round].is_active, "This round is no longer active.");
-        require(!rounds_by_id[_current_round].is_approved, "This round has already been approved.");
+        require(rounds_by_id[_current_round].status.is_active, "This round is no longer active.");
+        require(!rounds_by_id[_current_round].status.is_approved, "This round has already been approved.");
         _;
     }
 
@@ -150,9 +166,9 @@ contract DAO is Context {
     * @dev Checks that a round is accepting investments.
     */
     modifier isAcceptingInvestments() {
-        require(rounds_by_id[_current_round].is_active, "This round is no longer active.");
-        require(rounds_by_id[_current_round].is_approved, "This round has not been approved yet.");
-        require(!rounds_by_id[_current_round].is_complete, "This round has already been completed.");
+        require(rounds_by_id[_current_round].status.is_active, "This round is no longer active.");
+        require(rounds_by_id[_current_round].status.is_approved, "This round has not been approved yet.");
+        require(!rounds_by_id[_current_round].status.is_complete, "This round has already been completed.");
         _;
     }
 
@@ -249,22 +265,22 @@ contract DAO is Context {
         // Add a new round to the rounds_by_id mapping
         Round storage round = rounds_by_id[_current_round];
         round.round_id = _current_round;
-        round.is_active = true;
+        round.status.is_active = true;
         round.name = name;
         round.description = description;
         round.valuation = valuation;
         round.round_size = amount;
         round.left_to_raise = amount;
-        round.start_date = start_date;
-        round.end_date = end_date;
-        round.votes_for = 0;
-        round.votes_against = 0;
-        round.is_approved = false;
-        round.investors = new address payable[](0);
-        round.is_complete = false;
+        round.timeline.start_date = start_date;
+        round.timeline.end_date = end_date;
+        round.votes.votes_for = 0;
+        round.votes.votes_against = 0;
+        round.status.is_approved = false;
+        round.investments.investors = new address payable[](0);
+        round.status.is_complete = false;
 
         // Emit the RoundCreated event
-        emit RoundCreated(_current_round, round.name, round.description, round.valuation, amount, round.start_date, round.end_date);
+        emit RoundCreated(_current_round, round.name, round.description, round.valuation, amount, round.timeline.start_date, round.timeline.end_date);
     }
 
     /**
@@ -280,19 +296,19 @@ contract DAO is Context {
         Round storage round = rounds_by_id[_current_round];
 
         // Reset the users voting status if they're voting again
-        if (round.vote_status[_msgSender()] > 0) {
-            round.votes_for -= uint256(round.vote_status[_msgSender()]);
-        } else if (round.vote_status[_msgSender()] < 0) {
-            round.votes_against -= uint256(round.vote_status[_msgSender()]);
+        if (round.votes.vote_status[_msgSender()] > 0) {
+            round.votes.votes_for -= uint256(round.votes.vote_status[_msgSender()]);
+        } else if (round.votes.vote_status[_msgSender()] < 0) {
+            round.votes.votes_against -= uint256(round.votes.vote_status[_msgSender()]);
         }
 
         // Register the users new voting status
         if (vote) {
-            round.votes_for = number_of_votes;
-            round.vote_status[_msgSender()] = int256(number_of_votes);
+            round.votes.votes_for = number_of_votes;
+            round.votes.vote_status[_msgSender()] = int256(number_of_votes);
         } else {
-            round.votes_against = number_of_votes;
-            round.vote_status[_msgSender()] = -int256(number_of_votes);
+            round.votes.votes_against = number_of_votes;
+            round.votes.vote_status[_msgSender()] = -int256(number_of_votes);
         }
 
         // Update the approval status of the round
@@ -304,9 +320,9 @@ contract DAO is Context {
             _current_round,
             _msgSender(),
             vote,
-            round.votes_for,
-            round.votes_against,
-            round.is_approved
+            round.votes.votes_for,
+            round.votes.votes_against,
+            round.status.is_approved
         );
     }
 
@@ -328,8 +344,8 @@ contract DAO is Context {
 
         // Update the round
         round.left_to_raise -= amount;
-        round.investors.push(payable(_msgSender()));
-        round.investments[_msgSender()] = amount;
+        round.investments.investors.push(payable(_msgSender()));
+        round.investments.investments[_msgSender()] = amount;
 
         // Update the completion status of the round
         _update_completion();
@@ -340,7 +356,7 @@ contract DAO is Context {
             _msgSender(),
             amount,
             round.left_to_raise,
-            round.is_complete
+            round.status.is_complete
         );
     }
 
@@ -370,10 +386,10 @@ contract DAO is Context {
     function _update_approval() private {
         Round storage round = rounds_by_id[_current_round];
         uint256 votes_for_decision = _token.totalSupply() / 2;
-        if (round.votes_for > votes_for_decision) {
-            round.is_approved = true;
-        } else if (round.votes_against > votes_for_decision) {
-            round.is_active = false;
+        if (round.votes.votes_for > votes_for_decision) {
+            round.status.is_approved = true;
+        } else if (round.votes.votes_against > votes_for_decision) {
+            round.status.is_active = false;
         }
     }
 
@@ -383,11 +399,11 @@ contract DAO is Context {
     function _update_completion() private {
         Round storage round = rounds_by_id[_current_round];
         if (round.left_to_raise == 0) {
-            round.is_complete = true;
+            round.status.is_complete = true;
             _complete_mint();
             _treasury_balance += round.round_size;
-        } else if (round.left_to_raise > 0 && round.end_date > block.timestamp) {
-            round.is_active = false;
+        } else if (round.left_to_raise > 0 && round.timeline.end_date > block.timestamp) {
+            round.status.is_active = false;
             _return_funds();
         }
     }
@@ -398,9 +414,9 @@ contract DAO is Context {
     function _complete_mint() private {
         Round storage round = rounds_by_id[_current_round];
         uint256 share_price = _share_price();
-        for (uint256 i = 0; i < round.investors.length; i++) {
-            address investor = round.investors[i];
-            uint256 investment = round.investments[investor];
+        for (uint256 i = 0; i < round.investments.investors.length; i++) {
+            address investor = round.investments.investors[i];
+            uint256 investment = round.investments.investments[investor];
             uint256 tokens_awarded = investment / share_price;
             _token.mint(investor, tokens_awarded);
         }
@@ -421,9 +437,9 @@ contract DAO is Context {
     */
     function _return_funds() private {
         Round storage round = rounds_by_id[_current_round];
-        for (uint256 i = 0; i < round.investors.length; i++) {
-            address payable investor = round.investors[i];
-            uint256 investment = round.investments[investor];
+        for (uint256 i = 0; i < round.investments.investors.length; i++) {
+            address payable investor = round.investments.investors[i];
+            uint256 investment = round.investments.investments[investor];
             investor.transfer(investment);
         }
 

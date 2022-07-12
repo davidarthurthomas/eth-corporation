@@ -16,7 +16,7 @@ async function main() {
 
   await dao.deployed();
 
-  console.log("Lock with 1 ETH deployed to:", lock.address);
+  console.log("DAO deployed to", dao.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

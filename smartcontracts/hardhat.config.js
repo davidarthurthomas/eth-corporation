@@ -9,7 +9,7 @@ module.exports = {
   solidity: "0.8.15",
   networks: {
     mumbai: {
-      url: process.env.MORALIS_POLYGON_MUMBAI,
+      url: process.env.CHAINSTACK_POLYGON_MUMBAI,
       accounts: [
         process.env.PRIVATE_KEY
       ]
