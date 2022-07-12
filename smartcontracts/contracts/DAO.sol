@@ -2,13 +2,14 @@
 
 pragma solidity ^0.8.15;
 
-import "./ERC20.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+import "./Token.sol";
 
 contract DAO is Context {
     mapping(address => bool) private _founders;
     string private _name;
     string private _description;
-    ERC20 private _token;
+    Token private _token;
     uint256 private _current_round;
     uint256 private _treasury_balance;
 
@@ -21,7 +22,7 @@ contract DAO is Context {
         _founders[_msgSender()] = true;
         _name = name;
         _description = description;
-        _token = new ERC20(name, symbol);
+        _token = new Token(name, symbol);
         _current_round = 0;
         _treasury_balance = 0;
     }
