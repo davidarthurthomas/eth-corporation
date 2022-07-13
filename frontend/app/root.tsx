@@ -9,6 +9,7 @@ import {
 } from "@remix-run/react";
 import { MoralisProvider } from "react-moralis";
 import { useLoaderData } from "@remix-run/react";
+import styles from './tailwind.css';
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -16,12 +17,18 @@ export const meta: MetaFunction = () => ({
   viewport: "width=device-width,initial-scale=1",
 });
 
+export function links() {
+  return [{ rel: "stylesheet", href: styles }];
+}
+
 export const loader: LoaderFunction = () => {
   return {
     MORALIS_SERVER_URL: process.env.MORALIS_SERVER_URL,
     MORALIS_APP_ID: process.env.MORALIS_APP_ID,
   }
 }
+
+
 
 export default function App() {
 
