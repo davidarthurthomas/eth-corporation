@@ -46,8 +46,8 @@ contract DAO is Context {
     mapping(uint256 => Round) rounds_by_id;
 
     struct RoundTimeline {
-        uint32  start_date;
-        uint32  end_date;
+        uint256  start_date;
+        uint256  end_date;
     }
 
     struct RoundStatus {
@@ -181,6 +181,11 @@ contract DAO is Context {
         _;
     }
 
+    modifier isFirstRound() {
+        require(_current_round == 0, "The initial round has already been created.");
+        _;
+    }
+
     modifier noActiveRounds() {
         require(!rounds_by_id[_current_round].status.is_active, "There is already an active investment round.");
         _;
@@ -292,6 +297,52 @@ contract DAO is Context {
         }
         _founders.pop();
     }
+
+    /**
+    * @dev Creates the initial round with the initial supply distributed equally among the founders.
+    * @param initialSupply the initial supply of tokens
+    *
+    * @notice This function can only be called once.
+    */
+    function createFoundersRound(uint256 initialSupply) public onlyFounder() isFirstRound() {
+        Round storage round = rounds_by_id[_current_round];
+        round.round_id = _current_round;
+        round.status.is_active = false;
+        round.name = "Founders Round";
+        round.description = "The initial round of the DAO where the initial supply is distributed amongst the founders.";
+        round.valuation = 0;
+        round.round_size = initialSupply;
+        round.left_to_raise = 0;
+        round.timeline.start_date = block.timestamp;
+        round.timeline.end_date = block.timestamp;
+        round.votes.votes_for = _founders.length;
+        round.votes.votes_against = 0;
+        round.status.is_approved = true;
+        round.status.is_complete = true;
+
+        // Distribute the initial supply amongst the founders.
+        for (uint256 i = 0; i < _founders.length; i++) {
+            _token.mint(_founders[i], initialSupply / _founders.length);
+        }
+
+        // Emit the RoundCreated event.
+        emit RoundCreated(
+            round.round_id,
+            round.name,
+            round.description,
+            round.valuation,
+            round.round_size,
+            round.timeline.start_date,
+            round.timeline.end_date
+        );
+
+        // Emit the RoundClosed event.
+        emit RoundClosed(
+            round.round_id,
+            true
+        );
+    }
+
 
     /**
     * @dev Proposes a new funding round for the DAO.
