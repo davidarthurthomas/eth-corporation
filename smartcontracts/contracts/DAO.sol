@@ -341,6 +341,9 @@ contract DAO is Context {
             round.round_id,
             true
         );
+
+        // Update the current round.
+        _current_round++;
     }
 
 
