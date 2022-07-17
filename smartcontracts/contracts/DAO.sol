@@ -375,7 +375,7 @@ contract DAO is Context {
         round.description = description;
         round.valuation = valuation;
         round.round_size = amount;
-        round.token_supply = valuation / _token.totalSupply() * amount;
+        round.token_supply = amount * _token.totalSupply() / valuation;
         round.left_to_raise = amount;
         round.timeline.start_date = start_date;
         round.timeline.end_date = end_date;
