@@ -11,6 +11,6 @@ cd smartcontracts
 
 Add your private key to the .env variables
 
-npx hardhat deploy --name <NAME> --symbol <SYMBOL> --description <DESCRIPTION> --network mumbai
+npx hardhat deploy --name NAME --symbol SYMBOL --description DESCRIPTION --network mumbai
 
-npx hardhat verify <CONTRACT ADDRESS> <NAME> <SYMBOL> <DESCRIPTION> --network mumbai
+npx hardhat verify CONTRACT_ADDRESS NAME SYMBOL DESCRIPTION --network mumbai
