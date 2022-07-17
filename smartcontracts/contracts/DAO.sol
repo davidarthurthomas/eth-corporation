@@ -519,11 +519,10 @@ contract DAO is Context {
     */
     function _complete_mint() private {
         Round storage round = rounds_by_id[_current_round];
-        uint256 share_price = _share_price();
         for (uint256 i = 0; i < round.investments.investors.length; i++) {
             address investor = round.investments.investors[i];
             uint256 investment = round.investments.investments[investor];
-            uint256 tokens_awarded = investment / share_price;
+            uint256 tokens_awarded = _tokens_awarded(investment);
             _token.mint(investor, tokens_awarded);
         }
 
@@ -533,9 +532,9 @@ contract DAO is Context {
     /**
     * @dev Returns the share price of the current round.
     */
-    function _share_price() private view returns (uint256) {
+    function _tokens_awarded(uint256 investment) private view returns (uint256) {
         Round storage round = rounds_by_id[_current_round];
-        return round.valuation / _token.totalSupply();
+        return investment * _token.totalSupply() / round.valuation;
     }
 
     /**
