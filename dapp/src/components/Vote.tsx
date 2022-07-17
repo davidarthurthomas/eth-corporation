@@ -8,29 +8,41 @@ export default function Vote({ round, voteStatus }: { round: any, voteStatus: bo
 
     const castVoteFor = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
-        const chain: 'mumbai' = "mumbai";
         const options = {
-            chain: chain,
-            address: `${process.env.REACT_APP_CONTRACT_ADDRESS}`,
-            function_name: "voteOnRound",
+            contractAddress: `${process.env.REACT_APP_CONTRACT_ADDRESS}`,
+            functionName: "voteOnRound",
             abi: ABI,
-            params: true
+            params: {
+                vote: true
+            }
         }
-        const currentRound = await Moralis.Web3API.native.runContractFunction(options);
+        Moralis.executeFunction(options)
+        .then((result) => {
+            console.log(result);
+        })
+        .catch((error) => {
+            console.log(error)
+        })
         setIsFor(true);
     }
 
     const castVoteAgainst = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
-        const chain: 'mumbai' = "mumbai";
         const options = {
-            chain: chain,
-            address: `${process.env.REACT_APP_CONTRACT_ADDRESS}`,
-            function_name: "voteOnRound",
+            contractAddress: `${process.env.REACT_APP_CONTRACT_ADDRESS}`,
+            functionName: "voteOnRound",
             abi: ABI,
-            params: false
+            params: {
+                vote: false
+            }
         }
-        const currentRound = await Moralis.Web3API.native.runContractFunction(options);
+        Moralis.executeFunction(options)
+        .then((result) => {
+            console.log(result);
+        })
+        .catch((error) => {
+            console.log(error)
+        })
         setIsFor(false);
     }
 

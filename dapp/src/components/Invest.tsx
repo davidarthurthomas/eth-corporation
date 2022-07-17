@@ -16,20 +16,26 @@ export default function Invest({ round }: {round: any}) {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const chain: 'mumbai' = "mumbai";
         const options = {
-            chain: chain,
-            address: `${process.env.REACT_APP_CONTRACT_ADDRESS}`,
-            function_name: "invest",
+            contractAddress: `${process.env.REACT_APP_CONTRACT_ADDRESS}`,
+            functionName: "invest",
             abi: ABI,
-            params: amount, amount
+            params: {
+                payableAmount: amount,
+                amount: amount
+            }
         }
-        const currentRound = await Moralis.Web3API.native.runContractFunction(options);
-        console.log(amount);
+        Moralis.executeFunction(options)
+        .then((result) => {
+            console.log(result);
+        })
+        .catch((error) => {
+            console.log(error)
+        })
     }
 
     return (
-        <div className='border-black border w-6/12 rounded-xl px-8 py-12 ml-5'>
+        <div className='border-black border w-8/12 rounded-xl px-8 py-12 ml-5'>
             <h1 className='text-3xl font-bold font-mono mb-4'>
                 Invest
             </h1>

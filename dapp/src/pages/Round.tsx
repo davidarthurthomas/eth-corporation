@@ -52,7 +52,6 @@ export default function Proposal() {
         if (isInitialized) {
             getWeb3().then(() => {
                 getCurrentRound().then((currentRound) => {
-                    console.log(currentRound);
                     const current = {
                         id: currentRound.at(0),
                         name: currentRound.at(3),
