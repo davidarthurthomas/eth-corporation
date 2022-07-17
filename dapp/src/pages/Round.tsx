@@ -102,7 +102,7 @@ export default function Proposal() {
                 </h2>
             </div>
             {round?.is_active && !round?.is_approved && <Vote round={round} voteStatus={userVoteStatus} />}
-            {round?.is_active && round?.is_approved && <Invest />}
+            {round?.is_active && round?.is_approved && <Invest round={round} />}
         </div>
     )
 }

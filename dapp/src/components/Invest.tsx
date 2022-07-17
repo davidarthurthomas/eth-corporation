@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMoralis } from "react-moralis"
 import { ABI }  from "../utils/ABI"
 
-export default function Invest() {
+export default function Invest({ round }: {round: any}) {
     const { Moralis } = useMoralis();
     const [amount, setAmount] = useState(0);
 
@@ -34,7 +34,7 @@ export default function Invest() {
                 Invest
             </h1>
             <h1 className='text-xl font-mono italic mb-4'>
-                0.1 / 0.9 MATIC
+                {`${round.funding - round.left_to_raise} / ${round.funding} MATIC`}
             </h1>
             <h2 className='text-lg font-mono mb-4'>
                 Invest in the current funding round
