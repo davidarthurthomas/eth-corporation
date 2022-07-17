@@ -38,6 +38,7 @@ contract DAO is Context {
         string  description;
         uint256 valuation;
         uint256 round_size;
+        uint256 token_supply;
         uint256 left_to_raise;
         RoundVotes votes;
         RoundInvestments investments;
@@ -78,6 +79,7 @@ contract DAO is Context {
         string  description;
         uint256 valuation;
         uint256 round_size;
+        uint256 token_supply;
         uint256 left_to_raise;
         uint256 votes_for;
         uint256 votes_against;
@@ -93,7 +95,8 @@ contract DAO is Context {
         string name,
         string description,
         uint256 valuation,
-        uint256 amount,
+        uint256 round_size,
+        uint256 token_supply,
         uint256 start_date,
         uint256 end_date
     );
@@ -145,26 +148,30 @@ contract DAO is Context {
     * @dev Checks if the message sender is a founder of the DAO.
     */
     modifier onlyFounder() {
+        bool messageSenderIsFounder = false;
         // Iterate over the {founders} array and check if the sender is a founder.
         for (uint256 i = 0; i < _founders.length; i++) {
             if (_founders[i] == _msgSender()) {
-                _;
+                messageSenderIsFounder = true;
             }
         }
-        require(false, "Only founders can perform this action.");
+        require(messageSenderIsFounder, "Only founders can perform this action.");
+        _;
     }
 
     /**
     * @dev Checks that an address is listed as founder of the DAO.
     */
     modifier isFounder(address founder) {
+        bool messageSenderIsFounder = false;
         // Iterate over the {founders} array and check if the sender is a founder.
         for (uint256 i = 0; i < _founders.length; i++) {
             if (_founders[i] == founder) {
-                _;
+                messageSenderIsFounder = true;
             }
         }
-        require(false, "Address is not a founder.");
+        require(messageSenderIsFounder, "Only founders can perform this action.");
+        _;
     }
 
     /**
@@ -268,6 +275,7 @@ contract DAO is Context {
             rounds_by_id[_current_round].name,
             rounds_by_id[_current_round].description,
             rounds_by_id[_current_round].valuation,
+            rounds_by_id[_current_round].token_supply,
             rounds_by_id[_current_round].round_size,
             rounds_by_id[_current_round].left_to_raise,
             rounds_by_id[_current_round].votes.votes_for,
@@ -311,7 +319,8 @@ contract DAO is Context {
         round.name = "Founders Round";
         round.description = "The initial round of the DAO where the initial supply is distributed amongst the founders.";
         round.valuation = 0;
-        round.round_size = initialSupply;
+        round.round_size = 0;
+        round.token_supply = initialSupply;
         round.left_to_raise = 0;
         round.timeline.start_date = block.timestamp;
         round.timeline.end_date = block.timestamp;
@@ -332,6 +341,7 @@ contract DAO is Context {
             round.description,
             round.valuation,
             round.round_size,
+            initialSupply,
             round.timeline.start_date,
             round.timeline.end_date
         );
@@ -341,9 +351,6 @@ contract DAO is Context {
             round.round_id,
             true
         );
-
-        // Update the current round.
-        _current_round++;
     }
 
 
@@ -368,6 +375,7 @@ contract DAO is Context {
         round.description = description;
         round.valuation = valuation;
         round.round_size = amount;
+        round.token_supply = valuation / _token.totalSupply() * amount;
         round.left_to_raise = amount;
         round.timeline.start_date = start_date;
         round.timeline.end_date = end_date;
@@ -378,7 +386,7 @@ contract DAO is Context {
         round.status.is_complete = false;
 
         // Emit the RoundCreated event
-        emit RoundCreated(_current_round, round.name, round.description, round.valuation, amount, round.timeline.start_date, round.timeline.end_date);
+        emit RoundCreated(_current_round, round.name, round.description, round.valuation, amount, round.token_supply, round.timeline.start_date, round.timeline.end_date);
     }
 
     /**
