@@ -8,6 +8,7 @@ import Invest from "../components/Invest";
 export default function Proposal() {
     const { state } = useLocation()
     const [round, setRound] = useState<any>()
+    const [userVoteStatus, setUserVoteStatus] = useState<boolean>()
 
     let symbol: any;
     try {
@@ -18,7 +19,7 @@ export default function Proposal() {
         }
     }
 
-    const { Moralis, isInitialized } = useMoralis();
+    const { Moralis, isInitialized, user } = useMoralis();
 
     async function getWeb3() {
         const web3 = await Moralis.enableWeb3();
@@ -35,6 +36,16 @@ export default function Proposal() {
         }
         const currentRound = await Moralis.Web3API.native.runContractFunction(options);
         return currentRound;
+    }
+
+    async function getUserVoteStatus() {
+        const address = user?.attributes.ethAddress;
+        const VoteStatus = Moralis.Object.extend('Votes');
+        const query = new Moralis.Query(VoteStatus);
+        query.equalTo("voter", address);
+        query.descending("createdAt");
+        const results = await query.find();
+        return results[0].attributes.is_for;
     }
 
     useEffect(() => {
@@ -56,6 +67,7 @@ export default function Proposal() {
                         is_complete: currentRound.at(1)?.at(2),
                     }
                     setRound(current);
+                    getUserVoteStatus().then((isFor) => setUserVoteStatus(isFor))
                 })
             })
         }
@@ -89,7 +101,7 @@ export default function Proposal() {
                     {`Valuation: ${round?.valuation} MATIC | Supply: ${round?.supply} ${symbol}`}
                 </h2>
             </div>
-            {round?.is_active && !round?.is_approved && <Vote round={round}/>}
+            {round?.is_active && !round?.is_approved && <Vote round={round} voteStatus={userVoteStatus} />}
             {round?.is_active && round?.is_approved && <Invest />}
         </div>
     )

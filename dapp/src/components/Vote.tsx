@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useMoralis } from "react-moralis"
 import { ABI }  from "../utils/ABI"
 
-export default function Vote({round}: {round: any}) {
+export default function Vote({ round, voteStatus }: { round: any, voteStatus: boolean | undefined }) {
     const { Moralis } = useMoralis();
-    const [isFor, setIsFor] = useState(true);
+    const [isFor, setIsFor] = useState(voteStatus);
 
     const castVoteFor = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
